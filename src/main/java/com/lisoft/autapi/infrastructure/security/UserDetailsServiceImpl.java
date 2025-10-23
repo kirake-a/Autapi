@@ -1,8 +1,10 @@
 package com.lisoft.autapi.infrastructure.security;
 
 import com.lisoft.autapi.application.repositories.UserRepository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,25 +17,29 @@ import java.util.Objects;
 public class UserDetailsServiceImpl implements UserDetailsService {
     private final UserRepository userRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
+
     public UserDetailsServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        com.lisoft.autapi.domain.models.User userSchema = userRepository.getUserByEmail(username);
+        com.lisoft.autapi.domain.models.User user = userRepository.getUserByUsername(username);
 
-        if (Objects.isNull(userSchema)) {
-            throw new UsernameNotFoundException("Username not found!");
+        if (Objects.isNull(user)) {
+            user = userRepository.getUserByEmail(username);
         }
 
-        return new User(
-                userSchema.email(),
-                userSchema.password(),
-                true,
-                true,
-                true,
-                true,
-                Collections.singletonList(new SimpleGrantedAuthority("GENERIC")));
+        if (user == null) {
+            logger.error("Usuario no encontrado: {}", username);
+            throw new UsernameNotFoundException("Usuario no encontrado");
+        }
+
+        return new org.springframework.security.core.userdetails.User(
+                user.username(),
+                user.password(),
+                Collections.singletonList(
+                        new SimpleGrantedAuthority("ROLE_" + user.role().type().toUpperCase())));
     }
 }

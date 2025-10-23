@@ -20,6 +20,7 @@ import com.lisoft.autapi.infrastructure.mappers.UserMapper;
 import com.lisoft.autapi.infrastructure.schemas.UserSchema;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @RestController
 @RequestMapping("/api/v1/auth")
 @CrossOrigin(maxAge = 3600, methods = {RequestMethod.OPTIONS, RequestMethod.POST}, origins = {"*"})
+@Tag(name = "Authentication", description = "Endpoints for user authentication")
 public class AuthRouter {
     public final AuthServiceInterface authService;
     private final JWTUtils jwtUtils;

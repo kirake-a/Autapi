@@ -40,7 +40,14 @@ public class JWTUtilsComponent implements JWTUtils {
 
     @Override
     public String generateToken(UserDetails user) {
-        return generateToken(new HashMap<>(), user);
+        Map<String, Object> claims = new HashMap<>();
+
+        if (user.getAuthorities() != null && !user.getAuthorities().isEmpty()) {
+            String role = user.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+            claims.put("role", role);
+        }
+
+        return generateToken(claims, user);
     }
 
     @Override
@@ -55,18 +62,16 @@ public class JWTUtilsComponent implements JWTUtils {
 
     @Override
     public String buildToken(
-        Map<String, Object> extractClaims,
-        UserDetails user,
-        long expirationTime
-    ) {
-        return Jwts
-            .builder()
-            .setClaims(extractClaims)
-            .setSubject(user.getUsername())
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-            .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-            .compact();
+            Map<String, Object> extractClaims,
+            UserDetails user,
+            long expirationTime) {
+        return Jwts.builder()
+                .setClaims(extractClaims)
+                .setSubject(user.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
     @Override
@@ -88,17 +93,22 @@ public class JWTUtilsComponent implements JWTUtils {
     @Override
     public Claims extractAllClaims(String token) {
         return Jwts
-            .parserBuilder()
-            .setSigningKey(getSignInKey())
-            .build()
-            .parseClaimsJws(token)
-            .getBody();
+                .parserBuilder()
+                .setSigningKey(getSignInKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
     @Override
     public Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(this.secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    @Override
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
     }
 
 }

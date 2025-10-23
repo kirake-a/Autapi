@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -24,43 +25,44 @@ import com.lisoft.autapi.infrastructure.security.JwtAuthorizationFilter;
 public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthorizationFilter jwtAuthorizationFilter;
+    private final UserDetailsService userDetailsService;
 
     public SecurityConfig(
         AuthenticationProvider authenticationProvider,
-        JwtAuthorizationFilter jwtAuthorizationFilter
+        JwtAuthorizationFilter jwtAuthorizationFilter,
+        UserDetailsService userDetailsService
     ) {
         this.authenticationProvider = authenticationProvider;
         this.jwtAuthorizationFilter = jwtAuthorizationFilter;
+        this.userDetailsService = userDetailsService;
     }
     
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
+        return http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth ->
                 auth
+                .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers(
-                    "/api/v1/auth/**",
                     "/docs/**",
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
                 ).permitAll()
                 .anyRequest().authenticated()
-                
             )
             .sessionManagement(
                 session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authenticationProvider(authenticationProvider)
-            .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
+            .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
     }
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setAllowedOrigins(List.of("http://localhost:3000"));
+        corsConfig.setAllowedOrigins(List.of("http://localhost:3000", "127.0.0.1:8080"));
         corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         corsConfig.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         corsConfig.setExposedHeaders(List.of("Authorization"));

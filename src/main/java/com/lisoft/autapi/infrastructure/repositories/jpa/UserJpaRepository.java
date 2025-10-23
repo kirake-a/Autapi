@@ -8,4 +8,5 @@ import com.lisoft.autapi.infrastructure.schemas.UserSchema;
 @Repository
 public interface UserJpaRepository extends JpaRepository<UserSchema, String> {
     UserSchema findByEmail(String email);
+    UserSchema findByUsername(String username);
 }

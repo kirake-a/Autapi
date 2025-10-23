@@ -1,9 +1,12 @@
 package com.lisoft.autapi.infrastructure.security;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,36 +50,49 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
+        final String token;
+        final String username;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
-        
+
         try {
-            final String token = authHeader.substring(7);
-            final String username = jwtService.extractUsername(token);
+            token = authHeader.substring(7);
+            username = jwtService.extractUsername(token);
 
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-            if (username != null && auth == null) {
+            if (
+                username != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null
+            ) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                String role = jwtService.extractRole(token);
 
-                if (jwtService.isTokenValid(token, userDetails)) {
+                List<GrantedAuthority> authorities = new ArrayList<>();
+
+                if (role != null && !role.isEmpty()) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                }
+
+                if (userDetails != null && jwtService.isTokenValid(token, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                    );
+                            username,
+                            null,
+                            authorities);
 
-                    authToken.setDetails( new WebAuthenticationDetailsSource().buildDetails(request));
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                    jwtAuthLogger.info("JWT Username: {}", username);
+                    jwtAuthLogger.info("Authorities: {}", authorities);
                 }
             }
 
             filterChain.doFilter(request, response);
         } catch (Exception exception) {
-            jwtAuthLogger.error("Error during JWT authorization: {}", exception.getMessage());
+            jwtAuthLogger.error("Error during JWT authorization in internal filter: {}", exception.getMessage());
+
             handlerExceptionResolver.resolveException(request, response, null, exception);
         }
     }

@@ -46,4 +46,15 @@ public class UserRepositoryImpl implements UserRepository {
 
         return UserMapper.toModel(userSchema);
     }
+
+    @Override
+    public User getUserByUsername(String username) {
+        UserSchema user = userRepository.findByUsername(username);
+
+        if (Objects.isNull(user)) {
+            return null;
+        }
+
+        return UserMapper.toModel(user);
+    }
 }

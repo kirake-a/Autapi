@@ -1,5 +1,12 @@
 package com.lisoft.autapi.application.dtos;
 
-public record UserLogInDto(String email, String password) {
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
+public record UserLogInDto(
+    @NotBlank @Email String email,
+    @NotBlank String password,
+    String username
+) {
 
 }
