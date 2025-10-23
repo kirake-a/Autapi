@@ -1,5 +1,12 @@
 package com.lisoft.autapi.infrastructure.schemas;
 
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,7 +27,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "user")
-public class UserSchema {
+public class UserSchema implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -55,4 +62,15 @@ public class UserSchema {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private RoleCatalogSchema role;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (role == null || !Boolean.TRUE.equals(role.getIsActive())) {
+            return List.of();
+        }
+
+        String authority = "ROLE_" + role.getType().toUpperCase();
+
+        return List.of(new SimpleGrantedAuthority(authority));
+    }
 }

@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
 
     /**
      * Handle custom ConflictWithExistingResourcesException
-     * @param exception
+     * @param exception The exception to handle
      * @return ResponseEntity with error details included in the ResponseWrapper
      */
     @ExceptionHandler(ConflictWithExistingResourcesException.class)
@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
     /**
      * Handle custom ResourceNotFoundException
      * @param exception The exception to handle
-     * @return
+     * @return ResponseEntity with error details included in the ResponseWrapper
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ResponseWrapper<Object>> handleResourceNotFound(ResourceNotFoundException exception) {

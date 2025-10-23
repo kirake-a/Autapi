@@ -2,6 +2,7 @@ package com.lisoft.autapi.infrastructure.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.lisoft.autapi.application.repositories.RoleCatalogRepository;
@@ -14,12 +15,14 @@ public class BeansConfig {
     public AuthServiceImpl authService(
         PasswordEncoder passwordEncoder,
         UserRepository userRepository,
-        RoleCatalogRepository roleRepository
+        RoleCatalogRepository roleRepository,
+        AuthenticationManager authenticationManager
     ) {
         return new AuthServiceImpl(
             passwordEncoder,
             userRepository,
-            roleRepository
+            roleRepository,
+            authenticationManager
         );
     }
 }

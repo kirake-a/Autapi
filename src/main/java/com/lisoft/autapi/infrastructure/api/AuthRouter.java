@@ -8,10 +8,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lisoft.autapi.application.dtos.AuthenticationDto;
 import com.lisoft.autapi.application.dtos.ResponseWrapper;
 import com.lisoft.autapi.application.dtos.SuccessfulRegistrationDto;
+import com.lisoft.autapi.application.dtos.UserLogInDto;
+import com.lisoft.autapi.application.dtos.UserLoginServiceDto;
 import com.lisoft.autapi.application.dtos.UserSignUpDto;
 import com.lisoft.autapi.application.services.interfaces.AuthServiceInterface;
+import com.lisoft.autapi.application.utils.JWTUtils;
+import com.lisoft.autapi.infrastructure.mappers.UserMapper;
+import com.lisoft.autapi.infrastructure.schemas.UserSchema;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -23,9 +29,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @CrossOrigin(maxAge = 3600, methods = {RequestMethod.OPTIONS, RequestMethod.POST}, origins = {"*"})
 public class AuthRouter {
     public final AuthServiceInterface authService;
+    private final JWTUtils jwtUtils;
 
-    public AuthRouter(AuthServiceInterface authService) {
+    public AuthRouter(AuthServiceInterface authService, JWTUtils jwtUtils) {
         this.authService = authService;
+        this.jwtUtils = jwtUtils;
     }
 
     @PostMapping("signup")
@@ -42,6 +50,32 @@ public class AuthRouter {
                 data
             ),
             HttpStatus.CREATED
+        );
+    }
+
+    @PostMapping("login")
+    @Operation(summary = "Login", description = "Endpoint to authenticate an existing user.")
+    public ResponseEntity<ResponseWrapper<AuthenticationDto>> logIn(
+        @Valid @RequestBody UserLogInDto body
+    ) {
+        UserLoginServiceDto data = this.authService.logIn(body);
+
+        UserSchema user = UserMapper.toSchema(data.user());
+
+        String token = jwtUtils.generateToken(user);
+
+        return new ResponseEntity<>(
+            new ResponseWrapper<>(
+                true,
+                "Bienvenido de vuelta " + data.fullName(),
+                new AuthenticationDto(
+                    data.id(),
+                    data.fullName(),
+                    data.email(),
+                    token
+                )
+            ),
+            HttpStatus.OK
         );
     }
 }
