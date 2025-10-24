@@ -21,36 +21,42 @@ public class RoleCatalogSeed implements CommandLineRunner {
         RoleCatalog existingAdminRole = repository.getRoleByType(RoleCatalogEnum.ADMIN.getType());
         RoleCatalog existingUserRole = repository.getRoleByType(RoleCatalogEnum.NORMAL_USER.getType());
 
-        RoleCatalog adminRole = adminRoleCatalogExists(Objects.nonNull(existingAdminRole));
-        RoleCatalog normalUserRole = userRoleCatalogExists(Objects.nonNull(existingUserRole));
+        RoleCatalog adminRole = getRoleCatalog(
+            Objects.nonNull(existingAdminRole),
+            RoleCatalogEnum.ADMIN.getId(),
+            RoleCatalogEnum.ADMIN.getType(),
+            RoleCatalogEnum.ADMIN.getIsActive(),
+            RoleCatalogEnum.ADMIN.getDescription());
+
+        RoleCatalog normalUserRole = getRoleCatalog(
+            Objects.nonNull(existingUserRole),
+            RoleCatalogEnum.NORMAL_USER.getId(),
+            RoleCatalogEnum.NORMAL_USER.getType(),
+            RoleCatalogEnum.NORMAL_USER.getIsActive(),
+            RoleCatalogEnum.NORMAL_USER.getDescription());
 
         repository.saveRoleCatalog(adminRole);
         repository.saveRoleCatalog(normalUserRole);
     }
 
-    public RoleCatalog adminRoleCatalogExists(boolean exists) {
-        return exists ? new RoleCatalog(
-                RoleCatalogEnum.ADMIN.getId(),
-                RoleCatalogEnum.ADMIN.getType(),
-                RoleCatalogEnum.ADMIN.getIsActive(),
-                RoleCatalogEnum.ADMIN.getDescription())
-                : new RoleCatalog(
-                        null,
-                        RoleCatalogEnum.ADMIN.getType(),
-                        RoleCatalogEnum.ADMIN.getIsActive(),
-                        RoleCatalogEnum.ADMIN.getDescription());
-    }
-
-    public RoleCatalog userRoleCatalogExists(boolean exists) {
-        return exists ? new RoleCatalog(
-                RoleCatalogEnum.NORMAL_USER.getId(),
-                RoleCatalogEnum.NORMAL_USER.getType(),
-                RoleCatalogEnum.NORMAL_USER.getIsActive(),
-                RoleCatalogEnum.NORMAL_USER.getDescription())
-                : new RoleCatalog(
-                        null,
-                        RoleCatalogEnum.NORMAL_USER.getType(),
-                        RoleCatalogEnum.NORMAL_USER.getIsActive(),
-                        RoleCatalogEnum.NORMAL_USER.getDescription());
+    private RoleCatalog getRoleCatalog(
+            boolean exists,
+            Integer id,
+            String type,
+            Boolean isActive,
+            String description) {
+        return exists ?
+            new RoleCatalog(
+                id,
+                type,
+                isActive,
+                description
+            ):
+            new RoleCatalog(
+                null,
+                type,
+                isActive,
+                description
+            );
     }
 }
