@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import static com.lisoft.autapi.domain.utils.Constants.API_VERSION;
 import static com.lisoft.autapi.domain.utils.Constants.UNSUPPORTED_OPERATION_EXCEPTION_MESSAGE;
 
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping(API_VERSION + "/users")
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Users", description = "Endpoints for user management")
 public class UserRouter {
@@ -53,7 +54,7 @@ public class UserRouter {
     @PutMapping("profile-update/{userId}")
     @PreAuthorize("isAuthenticated() and #userId == authentication.principal.id") // Users can only update their own profile
     @Operation(summary = "Update Profile", description = "Endpoint to update user profile information.")
-    public void putMethodName(@PathVariable String userId, @RequestBody String entity) {
+    public void updateUserProfile(@PathVariable String userId, @RequestBody String entity) {
         throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_EXCEPTION_MESSAGE);
     }
 

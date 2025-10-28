@@ -1,5 +1,6 @@
 package com.lisoft.autapi.application.utils;
 
+import java.security.PublicKey;
 import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;
@@ -30,4 +31,6 @@ public interface JWTUtils {
     Claims extractAllClaims(String token);
 
     String extractRole(String token);
+
+    PublicKey getPublicKey4Export();
 }

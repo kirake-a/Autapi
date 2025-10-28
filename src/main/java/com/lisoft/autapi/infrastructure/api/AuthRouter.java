@@ -1,5 +1,6 @@
 package com.lisoft.autapi.infrastructure.api;
 
+import static com.lisoft.autapi.domain.utils.Constants.API_VERSION;
 import static com.lisoft.autapi.domain.utils.Constants.UNSUPPORTED_OPERATION_EXCEPTION_MESSAGE;
 
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping(API_VERSION + "/auth")
 @CrossOrigin(maxAge = 3600, methods = {RequestMethod.OPTIONS, RequestMethod.POST}, origins = {"*"})
 @Tag(name = "Authentication", description = "Endpoints for user authentication")
 public class AuthRouter {

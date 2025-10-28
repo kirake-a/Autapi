@@ -38,6 +38,11 @@ public class JWTUtilsComponent implements JWTUtils {
     private PrivateKey privateKey;
     private PublicKey publicKey;
 
+    @Override
+    public PublicKey getPublicKey4Export() {
+        return getPublicKey();
+    }
+
     private PrivateKey getPrivateKey() {
         if (privateKey == null) {
             try (InputStream inputStream = privateKeyResource.getInputStream()) {
