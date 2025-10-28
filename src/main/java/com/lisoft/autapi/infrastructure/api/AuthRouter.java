@@ -1,5 +1,6 @@
 package com.lisoft.autapi.infrastructure.api;
 
+import com.lisoft.autapi.application.dtos.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -8,12 +9,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lisoft.autapi.application.dtos.AuthenticationDto;
-import com.lisoft.autapi.application.dtos.ResponseWrapper;
-import com.lisoft.autapi.application.dtos.SuccessfulRegistrationDto;
-import com.lisoft.autapi.application.dtos.UserLogInDto;
-import com.lisoft.autapi.application.dtos.UserLoginServiceDto;
-import com.lisoft.autapi.application.dtos.UserSignUpDto;
 import com.lisoft.autapi.application.services.interfaces.AuthServiceInterface;
 import com.lisoft.autapi.application.utils.JWTUtils;
 import com.lisoft.autapi.infrastructure.mappers.UserMapper;
@@ -48,7 +43,7 @@ public class AuthRouter {
         return new ResponseEntity<>(
             new ResponseWrapper<>(
                 true,
-                "User " + data.email() + "registered successfully",
+                "User " + data.email() + " registered successfully",
                 data
             ),
             HttpStatus.CREATED
@@ -69,7 +64,7 @@ public class AuthRouter {
         return new ResponseEntity<>(
             new ResponseWrapper<>(
                 true,
-                "Bienvenido de vuelta " + data.fullName(),
+                "Welcome back " + data.fullName(),
                 new AuthenticationDto(
                     data.id(),
                     data.fullName(),
@@ -79,5 +74,11 @@ public class AuthRouter {
             ),
             HttpStatus.OK
         );
+    }
+
+    @PostMapping("password-reset")
+    @Operation(summary = "Reset Password", description = "User has lost his password and wants to change it")
+    public void resetPassword(@Valid @RequestBody UserResetPassword body) {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 }

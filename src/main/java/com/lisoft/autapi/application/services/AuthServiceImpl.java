@@ -20,6 +20,9 @@ import com.lisoft.autapi.domain.exceptions.ConflictWithExistingResourcesExceptio
 import com.lisoft.autapi.domain.exceptions.ResourceNotFoundException;
 import com.lisoft.autapi.domain.models.RoleCatalog;
 import com.lisoft.autapi.domain.models.User;
+import static com.lisoft.autapi.domain.utils.Constants.CONFLICT_WITH_EXISTING_RESOURCES_EXCEPTION_MESSAGE;
+import static com.lisoft.autapi.domain.utils.Constants.USER_NOT_FOUND;
+import static com.lisoft.autapi.domain.utils.Constants.RESOURCE_NOT_FOUND_EXCEPTION_MESSAGE;
 import com.lisoft.autapi.domain.utils.RoleCatalogEnum;
 
 public class AuthServiceImpl implements AuthServiceInterface {
@@ -48,8 +51,9 @@ public class AuthServiceImpl implements AuthServiceInterface {
         User existingUser = this.userRepository.getUserByEmail(user.email());
 
         if (Objects.isNull(existingUser)) {
-            logger.error("User not found while trying to log in");
-            throw new ResourceNotFoundException("User not found");
+            String error = RESOURCE_NOT_FOUND_EXCEPTION_MESSAGE + USER_NOT_FOUND + " while trying to log in.";
+            logger.error(error);
+            throw new ResourceNotFoundException(error);
         }
 
         authenticationManager.authenticate(
@@ -68,8 +72,9 @@ public class AuthServiceImpl implements AuthServiceInterface {
     @Transactional
     public SuccessfulRegistrationDto signUp(UserSignUpDto user) {
         if (Objects.nonNull(userRepository.getUserByEmail(user.email()))) {
-            logger.error("Email already in use");
-            throw new ConflictWithExistingResourcesException("Email already in use");
+            String error = CONFLICT_WITH_EXISTING_RESOURCES_EXCEPTION_MESSAGE + "Email already in use";
+            logger.error(error);
+            throw new ConflictWithExistingResourcesException(error);
         }
 
         RoleCatalog defaultRole = this.roleRepository.getRoleByType(
@@ -77,9 +82,14 @@ public class AuthServiceImpl implements AuthServiceInterface {
         );
 
         if (Objects.isNull(defaultRole)) {
-            logger.error("Default role not found");
-            throw new ResourceNotFoundException("Default role not found");
+            String error = RESOURCE_NOT_FOUND_EXCEPTION_MESSAGE + "Default role not found while trying to sign up.";
+            logger.error(error);
+            throw new ResourceNotFoundException(error);
         }
+
+        String username = Objects.isNull(user.username()) || user.username().isBlank() ?
+            createGenericUsername(user.name(), user.lastName()) :
+            user.username();
 
         User userToCreate = this.userRepository.saveUser(
             new User(
@@ -89,7 +99,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
                 user.email(),
                 user.age(),
                 user.address(),
-                user.username(),
+                username,
                 user.phoneNumber(),
                 passwordEncoder.encode(user.password()),
                 user.profilePhotoUrl(),
@@ -102,6 +112,22 @@ public class AuthServiceImpl implements AuthServiceInterface {
             userToCreate.name() + " " + userToCreate.lastName(),
             userToCreate.email()
         );
+    }
+
+    private String createGenericUsername(String name, String lastName) {
+        String baseUsername = (name.substring(0, 2) + "." + lastName.substring(0, 3))
+            .toLowerCase()
+            .replaceAll("\\s+", "");
+
+        String username = baseUsername;
+        Integer suffix = Math.toIntExact(System.currentTimeMillis() % 1000);
+
+        while (userRepository.getUserByUsername(username) != null) {
+            username = baseUsername + suffix;
+            suffix++;
+        }
+
+        return username;
     }
 
 }

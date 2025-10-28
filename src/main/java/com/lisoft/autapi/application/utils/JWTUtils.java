@@ -30,7 +30,5 @@ public interface JWTUtils {
 
     Claims extractAllClaims(String token);
 
-    Key getSignInKey();
-
     String extractRole(String token);
 }

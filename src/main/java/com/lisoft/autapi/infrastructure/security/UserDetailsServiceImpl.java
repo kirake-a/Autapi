@@ -11,7 +11,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.Objects;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -27,7 +26,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         com.lisoft.autapi.domain.models.User user = userRepository.getUserByUsername(username);
 
-        if (Objects.isNull(user)) {
+        if (user == null) {
             user = userRepository.getUserByEmail(username);
         }
 
@@ -36,10 +35,18 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("Usuario no encontrado");
         }
 
-        return new org.springframework.security.core.userdetails.User(
-                user.username(),
-                user.password(),
-                Collections.singletonList(
-                        new SimpleGrantedAuthority("ROLE_" + user.role().type().toUpperCase())));
+        return org.springframework.security.core.userdetails.User
+            .withUsername(user.username())
+            .password(user.password())
+            .authorities(new SimpleGrantedAuthority("ROLE_" + user.role().type().toUpperCase()))
+            .accountLocked(false)
+            .disabled(false)
+            .build();
+
+        // return new org.springframework.security.core.userdetails.User(
+        //         user.username(),
+        //         user.password(),
+        //         Collections.singletonList(
+        //                 new SimpleGrantedAuthority("ROLE_" + user.role().type().toUpperCase())));
     }
 }
