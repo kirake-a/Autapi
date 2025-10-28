@@ -10,7 +10,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -25,16 +24,13 @@ import com.lisoft.autapi.infrastructure.security.JwtAuthorizationFilter;
 public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthorizationFilter jwtAuthorizationFilter;
-    private final UserDetailsService userDetailsService;
 
     public SecurityConfig(
         AuthenticationProvider authenticationProvider,
-        JwtAuthorizationFilter jwtAuthorizationFilter,
-        UserDetailsService userDetailsService
+        JwtAuthorizationFilter jwtAuthorizationFilter
     ) {
         this.authenticationProvider = authenticationProvider;
         this.jwtAuthorizationFilter = jwtAuthorizationFilter;
-        this.userDetailsService = userDetailsService;
     }
     
     @Bean
