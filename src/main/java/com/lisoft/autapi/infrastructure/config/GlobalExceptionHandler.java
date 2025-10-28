@@ -89,6 +89,18 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(UnsupportedOperationException.class)
+    public ResponseEntity<ResponseWrapper<Object>> handleUnsupportedOperation(UnsupportedOperationException exception) {
+        return new ResponseEntity<>(
+            new ResponseWrapper<>(
+                false,
+                exception.getMessage(),
+                null
+            ),
+            HttpStatus.NOT_IMPLEMENTED
+        );
+    }
+
     /**
      * Handle ConstraintViolationException with @Validated on method parameters
      * @param exception The exception to handle
