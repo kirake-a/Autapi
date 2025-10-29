@@ -34,11 +34,10 @@ public class AuthServiceImpl implements AuthServiceInterface {
     private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     public AuthServiceImpl(
-        PasswordEncoder passwordEncoder,
-        UserRepository userRepository,
-        RoleCatalogRepository roleRepository,
-        AuthenticationManager authenticationManager
-    ) {
+            PasswordEncoder passwordEncoder,
+            UserRepository userRepository,
+            RoleCatalogRepository roleRepository,
+            AuthenticationManager authenticationManager) {
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -48,38 +47,34 @@ public class AuthServiceImpl implements AuthServiceInterface {
     @Override
     @Transactional
     public UserLoginServiceDto logIn(UserLogInDto user) {
-        User existingUser = this.userRepository.getUserByEmail(user.email());
-
-        if (Objects.isNull(existingUser)) {
-            String error = RESOURCE_NOT_FOUND_EXCEPTION_MESSAGE + USER_NOT_FOUND + " while trying to log in.";
-            logger.error(error);
-            throw new ResourceNotFoundException(error);
-        }
+        User existingUser = this.userRepository.getUserByEmail(user.email())
+                .orElseThrow(() -> {
+                    String error = RESOURCE_NOT_FOUND_EXCEPTION_MESSAGE + USER_NOT_FOUND + " while trying to log in.";
+                    logger.error(error);
+                    return new ResourceNotFoundException(error);
+                });
 
         authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(user.email(), user.password())
-        );
+                new UsernamePasswordAuthenticationToken(user.email(), user.password()));
 
         return new UserLoginServiceDto(
-            existingUser.id(),
-            existingUser.name() + " " + existingUser.lastName(),
-            existingUser.email(),
-            existingUser
-        );
+                existingUser.id(),
+                existingUser.name() + " " + existingUser.lastName(),
+                existingUser.email(),
+                existingUser);
     }
 
     @Override
     @Transactional
     public SuccessfulRegistrationDto signUp(UserSignUpDto user) {
-        if (Objects.nonNull(userRepository.getUserByEmail(user.email()))) {
+        if (userRepository.existsByEmail(user.email())) {
             String error = CONFLICT_WITH_EXISTING_RESOURCES_EXCEPTION_MESSAGE + "Email already in use";
             logger.error(error);
             throw new ConflictWithExistingResourcesException(error);
         }
 
         RoleCatalog defaultRole = this.roleRepository.getRoleByType(
-            RoleCatalogEnum.NORMAL_USER.getType()
-        );
+                RoleCatalogEnum.NORMAL_USER.getType());
 
         if (Objects.isNull(defaultRole)) {
             String error = RESOURCE_NOT_FOUND_EXCEPTION_MESSAGE + "Default role not found while trying to sign up.";
@@ -87,42 +82,39 @@ public class AuthServiceImpl implements AuthServiceInterface {
             throw new ResourceNotFoundException(error);
         }
 
-        String username = Objects.isNull(user.username()) || user.username().isBlank() ?
-            createGenericUsername(user.name(), user.lastName()) :
-            user.username();
+        String username = Objects.isNull(user.username()) || user.username().isBlank()
+                ? createGenericUsername(user.name(), user.lastName())
+                : user.username();
 
         User userToCreate = this.userRepository.saveUser(
-            new User(
-                null,
-                user.name(),
-                user.lastName(),
-                user.email(),
-                user.age(),
-                user.address(),
-                username,
-                user.phoneNumber(),
-                passwordEncoder.encode(user.password()),
-                user.profilePhotoUrl(),
-                defaultRole
-            )
-        );
+                new User(
+                        null,
+                        user.name(),
+                        user.lastName(),
+                        user.email(),
+                        user.age(),
+                        user.address(),
+                        username,
+                        user.phoneNumber(),
+                        passwordEncoder.encode(user.password()),
+                        user.profilePhotoUrl(),
+                        defaultRole));
 
         return new SuccessfulRegistrationDto(
-            userToCreate.id(),
-            userToCreate.name() + " " + userToCreate.lastName(),
-            userToCreate.email()
-        );
+                userToCreate.id(),
+                userToCreate.name() + " " + userToCreate.lastName(),
+                userToCreate.email());
     }
 
     private String createGenericUsername(String name, String lastName) {
         String baseUsername = (name.substring(0, 2) + "." + lastName.substring(0, 3))
-            .toLowerCase()
-            .replaceAll("\\s+", "");
+                .toLowerCase()
+                .replaceAll("\\s+", "");
 
         String username = baseUsername;
         Integer suffix = Math.toIntExact(System.currentTimeMillis() % 1000);
 
-        while (userRepository.getUserByUsername(username) != null) {
+        while (userRepository.existsByUsername(username)) {
             username = baseUsername + suffix;
             suffix++;
         }

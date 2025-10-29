@@ -22,23 +22,19 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        com.lisoft.autapi.domain.models.User user = userRepository.getUserByUsername(username);
-
-        if (user == null) {
-            user = userRepository.getUserByEmail(username);
-        }
-
-        if (user == null) {
-            logger.error("Usuario no encontrado: {}", username);
-            throw new UsernameNotFoundException("Usuario no encontrado");
-        }
+        com.lisoft.autapi.domain.models.User user = userRepository.getUserByUsername(username)
+                .or(() -> userRepository.getUserByEmail(username))
+                .orElseThrow(() -> {
+                    logger.error("Usuario no encontrado: {}", username);
+                    return new UsernameNotFoundException("Usuario no encontrado: " + username);
+                });
 
         return org.springframework.security.core.userdetails.User
-            .withUsername(user.username())
-            .password(user.password())
-            .authorities(new SimpleGrantedAuthority("ROLE_" + user.role().type().toUpperCase()))
-            .accountLocked(false)
-            .disabled(false)
-            .build();
+                .withUsername(user.username())
+                .password(user.password())
+                .authorities(new SimpleGrantedAuthority("ROLE_" + user.role().type().toUpperCase()))
+                .accountLocked(false)
+                .disabled(false)
+                .build();
     }
 }

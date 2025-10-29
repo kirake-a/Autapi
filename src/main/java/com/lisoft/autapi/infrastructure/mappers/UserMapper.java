@@ -1,5 +1,6 @@
 package com.lisoft.autapi.infrastructure.mappers;
 
+import com.lisoft.autapi.application.dtos.UserResponseDto;
 import com.lisoft.autapi.domain.models.User;
 import com.lisoft.autapi.infrastructure.schemas.UserSchema;
 
@@ -43,6 +44,21 @@ public class UserMapper {
             user.password(),
             user.profilePhotoUrl(),
             RoleCatalogMapper.toSchema(user.role())
+        );
+    }
+
+    public static UserResponseDto toResponseDto(User user) {
+        
+        return new UserResponseDto(
+            user.id(),
+            user.name(),
+            user.lastName(),
+            user.email(),
+            user.age(),
+            user.address(),
+            user.username(),
+            user.phoneNumber(),
+            user.profilePhotoUrl()
         );
     }
 

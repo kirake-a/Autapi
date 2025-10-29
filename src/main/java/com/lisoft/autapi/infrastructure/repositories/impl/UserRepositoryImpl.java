@@ -1,6 +1,7 @@
 package com.lisoft.autapi.infrastructure.repositories.impl;
 
-import java.util.Objects;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
@@ -19,25 +20,21 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public User getUserByUserId(String userId) {
-        UserSchema user = userRepository.findById(userId).orElse(null);
-
-        if (Objects.isNull(user)) {
-            return null;
-        }
-
-        return UserMapper.toModel(user);
+    public Optional<User> getUserByUserId(String userId) {
+        return userRepository.findById(userId)
+                .map(UserMapper::toModel);
     }
 
     @Override
-    public User getUserByEmail(String email) {
-        UserSchema user = userRepository.findByEmail(email);
+    public Optional<User> getUserByEmail(String email) {
+        return Optional.ofNullable(userRepository.findByEmail(email))
+                .map(UserMapper::toModel);
+    }
 
-        if (Objects.isNull(user)) {
-            return null;
-        }
-
-        return UserMapper.toModel(user);
+    @Override
+    public Optional<User> getUserByUsername(String username) {
+        return Optional.ofNullable(userRepository.findByUsername(username))
+                .map(UserMapper::toModel);
     }
 
     @Override
@@ -48,13 +45,34 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public User getUserByUsername(String username) {
-        UserSchema user = userRepository.findByUsername(username);
+    public List<User> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(UserMapper::toModel)
+                .toList();
+    }
 
-        if (Objects.isNull(user)) {
-            return null;
+    @Override
+    public User deleteUserById(String userId) {
+        Optional<UserSchema> existing = userRepository.findById(userId);
+
+        if (existing.isPresent()) {
+            User user = UserMapper.toModel(existing.get());
+            userRepository.deleteById(userId);
+            return user;
         }
 
-        return UserMapper.toModel(user);
+        return null;
     }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
 }

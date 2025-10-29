@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lisoft.autapi.application.dtos.AuthenticationDto;
+import com.lisoft.autapi.application.dtos.SuccessfulAuthenticationDto;
 import com.lisoft.autapi.application.dtos.ResponseWrapper;
 import com.lisoft.autapi.application.dtos.SuccessfulRegistrationDto;
 import com.lisoft.autapi.application.dtos.UserLogInDto;
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @CrossOrigin(maxAge = 3600, methods = {RequestMethod.OPTIONS, RequestMethod.POST}, origins = {"*"})
 @Tag(name = "Authentication", description = "Endpoints for user authentication")
 public class AuthRouter {
-    public final AuthServiceInterface authService;
+    private final AuthServiceInterface authService;
     private final JWTUtils jwtUtils;
 
     public AuthRouter(AuthServiceInterface authService, JWTUtils jwtUtils) {
@@ -61,7 +61,7 @@ public class AuthRouter {
 
     @PostMapping("login")
     @Operation(summary = "Login", description = "Endpoint to authenticate an existing user.")
-    public ResponseEntity<ResponseWrapper<AuthenticationDto>> logIn(
+    public ResponseEntity<ResponseWrapper<SuccessfulAuthenticationDto>> logIn(
         @Valid @RequestBody UserLogInDto body
     ) {
         UserLoginServiceDto data = this.authService.logIn(body);
@@ -74,7 +74,7 @@ public class AuthRouter {
             new ResponseWrapper<>(
                 true,
                 "Welcome back " + data.fullName(),
-                new AuthenticationDto(
+                new SuccessfulAuthenticationDto(
                     data.id(),
                     data.fullName(),
                     data.email(),

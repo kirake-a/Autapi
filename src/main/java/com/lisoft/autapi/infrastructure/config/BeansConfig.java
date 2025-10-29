@@ -8,11 +8,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.lisoft.autapi.application.repositories.RoleCatalogRepository;
 import com.lisoft.autapi.application.repositories.UserRepository;
 import com.lisoft.autapi.application.services.AuthServiceImpl;
+import com.lisoft.autapi.application.services.UserServiceImpl;
 
 @Configuration
 public class BeansConfig {
     @Bean
-    public AuthServiceImpl authService(
+    AuthServiceImpl authService(
         PasswordEncoder passwordEncoder,
         UserRepository userRepository,
         RoleCatalogRepository roleRepository,
@@ -23,6 +24,19 @@ public class BeansConfig {
             userRepository,
             roleRepository,
             authenticationManager
+        );
+    }
+
+    @Bean
+    UserServiceImpl userService(
+        UserRepository userRepository,
+        PasswordEncoder passwordEncoder,
+        RoleCatalogRepository roleRepository
+    ) {
+        return new UserServiceImpl(
+            userRepository,
+            passwordEncoder,
+            roleRepository
         );
     }
 }
