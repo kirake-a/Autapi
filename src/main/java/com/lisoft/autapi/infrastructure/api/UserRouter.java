@@ -2,6 +2,7 @@ package com.lisoft.autapi.infrastructure.api;
 
 import com.lisoft.autapi.application.dtos.UserChangePassword;
 import com.lisoft.autapi.application.dtos.UserResponseDto;
+import com.lisoft.autapi.application.dtos.UserUpdateProfileDto;
 import com.lisoft.autapi.application.services.interfaces.UserServiceInterface;
 import com.lisoft.autapi.domain.models.User;
 import com.lisoft.autapi.infrastructure.mappers.UserMapper;
@@ -20,7 +21,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import static com.lisoft.autapi.domain.utils.Constants.API_VERSION;
-import static com.lisoft.autapi.domain.utils.Constants.UNSUPPORTED_OPERATION_EXCEPTION_MESSAGE;
 
 import java.util.List;
 
@@ -28,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+
 
 @RestController
 @RequestMapping(API_VERSION + "/users")
@@ -107,17 +108,28 @@ public class UserRouter {
                 HttpStatus.OK);
     }
 
-    @PutMapping("profile-update/{userId}")
-    @PreAuthorize("isAuthenticated() and #userId == authentication.principal.id") // Users can only update their own
-                                                                                  // profile
+    @PutMapping("profile-update")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Update Profile", description = "Endpoint to update user profile information.")
-    public void updateUserProfile(@PathVariable String userId, @RequestBody String entity) {
-        throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_EXCEPTION_MESSAGE);
+    public ResponseEntity<ResponseWrapper<UserResponseDto>> updateUserProfile(
+        @RequestBody UserUpdateProfileDto body,
+        Authentication authentication) {
+        String authenticatedUsername = authentication.getName();
+
+        User updatedUser = userService.updateUserProfile(authenticatedUsername, body);
+
+        return new ResponseEntity<>(
+                new ResponseWrapper<>(
+                        true,
+                        "User profile updated successfully",
+                        UserMapper.toResponseDto(updatedUser)
+                ),
+                HttpStatus.OK
+        );
     }
 
     @GetMapping("username-exists")
-    @PreAuthorize("permitAll")
-    @Operation(summary = "Check Username Existence", description = "Endpoint to check if a username is already taken.")
+    @Operation(summary = "Check Username Existence", description = "Endpoint to check if a username is already taken.", security = @SecurityRequirement(name = ""))
     public ResponseEntity<ResponseWrapper<ExistsResponseDto>> usernameExists(@RequestParam String username) {
         boolean exists = userService.usernameExists(username);
 
@@ -130,8 +142,7 @@ public class UserRouter {
     }
 
     @GetMapping("email-exists")
-    @PreAuthorize("permitAll")
-    @Operation(summary = "Check Email Existence", description = "Endpoint to check if an email is already registered.")
+    @Operation(summary = "Check Email Existence", description = "Endpoint to check if an email is already registered.",security = @SecurityRequirement(name = ""))
     public ResponseEntity<ResponseWrapper<ExistsResponseDto>> emailExists(@Email @RequestParam String email) {
         boolean exists = userService.emailExists(email);
 
@@ -143,8 +154,42 @@ public class UserRouter {
                 HttpStatus.OK);
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get Authenticated User", description = "Endpoint to retrieve the authenticated user's information.")
+    public ResponseEntity<ResponseWrapper<UserResponseDto>> getMyProfile(Authentication authentication) {
+        String authenticatedUsername = authentication.getName();
+
+        User user = userService.getMe(authenticatedUsername);
+
+        return new ResponseEntity<>(
+                new ResponseWrapper<>(
+                        true,
+                        "Authenticated user profile retrieved successfully",
+                        UserMapper.toResponseDto(user)
+                ),
+                HttpStatus.OK
+        );
+    }
+
+    @DeleteMapping("/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete User", description = "Endpoint to delete a user by ID.")
+    public ResponseEntity<ResponseWrapper<String>> deleteUser(@PathVariable String userId) {
+        User deletedUser = userService.deleteUser(userId);
+
+        return new ResponseEntity<>(
+                new ResponseWrapper<>(
+                        true,
+                        "User " + deletedUser.username() + " deleted successfully",
+                        deletedUser.id()
+                ),
+                HttpStatus.NO_CONTENT
+        );
+    }
+
     @GetMapping("/foo")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get Foo", description = "Endpoint to get foo value.")
     public ResponseEntity<ResponseWrapper<String>> getFoo() {
         return new ResponseEntity<>(

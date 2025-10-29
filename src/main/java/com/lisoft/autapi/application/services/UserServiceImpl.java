@@ -52,8 +52,8 @@ public class UserServiceImpl implements UserServiceInterface {
 
     @Override
     @Transactional(readOnly = true)
-    public User getMe(String authenticatedUserId) {
-        return userRepository.getUserByUserId(authenticatedUserId)
+    public User getMe(String authenticatedUsername) {
+        return userRepository.getUserByUsername(authenticatedUsername)
                 .orElseThrow(() -> {
                     String error = RESOURCE_NOT_FOUND_EXCEPTION_MESSAGE + USER_NOT_FOUND
                             + " while trying to get user profile.";
@@ -100,8 +100,8 @@ public class UserServiceImpl implements UserServiceInterface {
 
     @Override
     @Transactional
-    public User updateUserProfile(String userId, UserUpdateProfileDto userUpdate) {
-        User user = userRepository.getUserByUserId(userId)
+    public User updateUserProfile(String username, UserUpdateProfileDto userUpdate) {
+        User user = userRepository.getUserByUsername(username)
                 .orElseThrow(() -> {
                     String error = RESOURCE_NOT_FOUND_EXCEPTION_MESSAGE + USER_NOT_FOUND
                             + " while trying to update user profile.";

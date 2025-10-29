@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 @RestController
 @RequestMapping(API_VERSION + "/auth")
-@CrossOrigin(maxAge = 3600, methods = {RequestMethod.OPTIONS, RequestMethod.POST}, origins = {"*"})
+@CrossOrigin(maxAge = 3600, methods = {RequestMethod.OPTIONS, RequestMethod.POST }, origins = { "*" })
 @Tag(name = "Authentication", description = "Endpoints for user authentication")
 public class AuthRouter {
     private final AuthServiceInterface authService;
@@ -45,25 +45,21 @@ public class AuthRouter {
     @PostMapping("signup")
     @Operation(summary = "Signup", description = "Endpoint to register a new user.")
     public ResponseEntity<ResponseWrapper<SuccessfulRegistrationDto>> signUp(
-        @Valid @RequestBody UserSignUpDto body
-    ) {
+            @Valid @RequestBody UserSignUpDto body) {
         SuccessfulRegistrationDto data = this.authService.signUp(body);
 
         return new ResponseEntity<>(
-            new ResponseWrapper<>(
-                true,
-                "User " + data.email() + " registered successfully",
-                data
-            ),
-            HttpStatus.CREATED
-        );
+                new ResponseWrapper<>(
+                        true,
+                        "User " + data.email() + " registered successfully",
+                        data),
+                HttpStatus.CREATED);
     }
 
     @PostMapping("login")
     @Operation(summary = "Login", description = "Endpoint to authenticate an existing user.")
     public ResponseEntity<ResponseWrapper<SuccessfulAuthenticationDto>> logIn(
-        @Valid @RequestBody UserLogInDto body
-    ) {
+            @Valid @RequestBody UserLogInDto body) {
         UserLoginServiceDto data = this.authService.logIn(body);
 
         UserSchema user = UserMapper.toSchema(data.user());
@@ -71,18 +67,15 @@ public class AuthRouter {
         String token = jwtUtils.generateToken(user);
 
         return new ResponseEntity<>(
-            new ResponseWrapper<>(
-                true,
-                "Welcome back " + data.fullName(),
-                new SuccessfulAuthenticationDto(
-                    data.id(),
-                    data.fullName(),
-                    data.email(),
-                    token
-                )
-            ),
-            HttpStatus.OK
-        );
+                new ResponseWrapper<>(
+                        true,
+                        "Welcome back " + data.fullName(),
+                        new SuccessfulAuthenticationDto(
+                                data.id(),
+                                data.fullName(),
+                                data.email(),
+                                token)),
+                HttpStatus.OK);
     }
 
     @PostMapping("password-reset")

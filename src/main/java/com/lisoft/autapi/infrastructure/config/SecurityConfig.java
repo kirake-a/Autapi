@@ -16,6 +16,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import static com.lisoft.autapi.domain.utils.Constants.API_VERSION;
+
 import com.lisoft.autapi.infrastructure.security.JwtAuthorizationFilter;
 
 @Configuration
@@ -39,12 +41,14 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth ->
                 auth
-                .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers(API_VERSION +"/auth/**").permitAll()
                 .requestMatchers(
                     "/docs/**",
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
                 ).permitAll()
+                .requestMatchers(API_VERSION + "/users/username-exists").permitAll()
+                .requestMatchers(API_VERSION + "/users/email-exists").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(
