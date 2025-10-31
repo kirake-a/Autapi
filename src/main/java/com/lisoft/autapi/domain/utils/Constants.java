@@ -10,6 +10,7 @@ public class Constants {
     public static final String UNSUPPORTED_OPERATION_EXCEPTION_MESSAGE = "This method is not implemented yet: ";
 
     public static final String USER_NOT_FOUND = "User not found";
+    public static final String PASSWORD_DOES_NOT_FOLLOW_POLICY = "The password does not follow the password policy";
 
     public static final String API_VERSION = "/api/v1";
 

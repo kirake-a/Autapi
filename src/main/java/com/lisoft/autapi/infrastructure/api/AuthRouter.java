@@ -3,6 +3,7 @@ package com.lisoft.autapi.infrastructure.api;
 import static com.lisoft.autapi.domain.utils.Constants.API_VERSION;
 import static com.lisoft.autapi.domain.utils.Constants.UNSUPPORTED_OPERATION_EXCEPTION_MESSAGE;
 
+import com.lisoft.autapi.application.dtos.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -11,13 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lisoft.autapi.application.dtos.SuccessfulAuthenticationDto;
-import com.lisoft.autapi.application.dtos.ResponseWrapper;
-import com.lisoft.autapi.application.dtos.SuccessfulRegistrationDto;
-import com.lisoft.autapi.application.dtos.UserLogInDto;
-import com.lisoft.autapi.application.dtos.UserLoginServiceDto;
-import com.lisoft.autapi.application.dtos.UserResetPassword;
-import com.lisoft.autapi.application.dtos.UserSignUpDto;
 import com.lisoft.autapi.application.services.interfaces.AuthServiceInterface;
 import com.lisoft.autapi.application.utils.JWTUtils;
 import com.lisoft.autapi.infrastructure.mappers.UserMapper;
@@ -80,7 +74,17 @@ public class AuthRouter {
 
     @PostMapping("password-reset")
     @Operation(summary = "Reset Password", description = "User has lost his password and wants to change it")
-    public void resetPassword(@Valid @RequestBody UserResetPassword body) {
-        throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_EXCEPTION_MESSAGE);
+    public ResponseEntity<ResponseWrapper<SuccessfulPasswordResetDto>> resetPassword(
+            @Valid @RequestBody UserResetPassword body) {
+        SuccessfulPasswordResetDto data = authService.passwordReset(body);
+
+        return new ResponseEntity<>(
+                new ResponseWrapper<>(
+                        true,
+                        data.message(),
+                        data
+                ),
+                HttpStatus.OK
+        );
     }
 }

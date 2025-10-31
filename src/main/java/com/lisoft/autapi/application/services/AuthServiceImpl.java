@@ -2,6 +2,10 @@ package com.lisoft.autapi.application.services;
 
 import java.util.Objects;
 
+import com.lisoft.autapi.application.dtos.*;
+import com.lisoft.autapi.application.utils.GenericUsernameGenerator;
+import com.lisoft.autapi.application.utils.PasswordValidator;
+import com.lisoft.autapi.domain.exceptions.InvalidArgumentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,10 +13,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.lisoft.autapi.application.dtos.SuccessfulRegistrationDto;
-import com.lisoft.autapi.application.dtos.UserLogInDto;
-import com.lisoft.autapi.application.dtos.UserLoginServiceDto;
-import com.lisoft.autapi.application.dtos.UserSignUpDto;
 import com.lisoft.autapi.application.repositories.RoleCatalogRepository;
 import com.lisoft.autapi.application.repositories.UserRepository;
 import com.lisoft.autapi.application.services.interfaces.AuthServiceInterface;
@@ -20,10 +20,9 @@ import com.lisoft.autapi.domain.exceptions.ConflictWithExistingResourcesExceptio
 import com.lisoft.autapi.domain.exceptions.ResourceNotFoundException;
 import com.lisoft.autapi.domain.models.RoleCatalog;
 import com.lisoft.autapi.domain.models.User;
-import static com.lisoft.autapi.domain.utils.Constants.CONFLICT_WITH_EXISTING_RESOURCES_EXCEPTION_MESSAGE;
-import static com.lisoft.autapi.domain.utils.Constants.USER_NOT_FOUND;
-import static com.lisoft.autapi.domain.utils.Constants.RESOURCE_NOT_FOUND_EXCEPTION_MESSAGE;
 import com.lisoft.autapi.domain.utils.RoleCatalogEnum;
+
+import static com.lisoft.autapi.domain.utils.Constants.*;
 
 public class AuthServiceImpl implements AuthServiceInterface {
     private final PasswordEncoder passwordEncoder;
@@ -73,6 +72,11 @@ public class AuthServiceImpl implements AuthServiceInterface {
             throw new ConflictWithExistingResourcesException(error);
         }
 
+        if (!PasswordValidator.isValid(user.password())) {
+            logger.error("Sign up: " + PASSWORD_DOES_NOT_FOLLOW_POLICY);
+            throw new InvalidArgumentException(PASSWORD_DOES_NOT_FOLLOW_POLICY);
+        }
+
         RoleCatalog defaultRole = this.roleRepository.getRoleByType(
                 RoleCatalogEnum.NORMAL_USER.getType());
 
@@ -83,7 +87,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
         }
 
         String username = Objects.isNull(user.username()) || user.username().isBlank()
-                ? createGenericUsername(user.name(), user.lastName())
+                ? GenericUsernameGenerator.create(user.name(), user.lastName(), userRepository)
                 : user.username();
 
         User userToCreate = this.userRepository.saveUser(
@@ -106,20 +110,48 @@ public class AuthServiceImpl implements AuthServiceInterface {
                 userToCreate.email());
     }
 
-    private String createGenericUsername(String name, String lastName) {
-        String baseUsername = (name.substring(0, 2) + "." + lastName.substring(0, 3))
-                .toLowerCase()
-                .replaceAll("\\s+", "");
+    @Override
+    @Transactional
+    public SuccessfulPasswordResetDto passwordReset(UserResetPassword data) {
+        User user = userRepository.getUserByEmail(data.email())
+                .orElseThrow(() -> {
+                    String error =  RESOURCE_NOT_FOUND_EXCEPTION_MESSAGE + USER_NOT_FOUND + " while trying to reset password.";
+                    logger.error(error);
+                    return new ResourceNotFoundException(error);
+                });
 
-        String username = baseUsername;
-        Integer suffix = Math.toIntExact(System.currentTimeMillis() % 1000);
-
-        while (userRepository.existsByUsername(username)) {
-            username = baseUsername + suffix;
-            suffix++;
+        if (!data.newPassword().equals(data.newPasswordConfirm())) {
+            String error = "The passwords do not match";
+            logger.error(error);
+            throw new InvalidArgumentException(error);
         }
 
-        return username;
+        if (!PasswordValidator.isValid(data.newPassword())) {
+            logger.error("Password reset :" + PASSWORD_DOES_NOT_FOLLOW_POLICY);
+            throw new InvalidArgumentException(PASSWORD_DOES_NOT_FOLLOW_POLICY);
+        }
+
+        String encodedPassword = passwordEncoder.encode(data.newPassword());
+
+        User updatedUser = new User(
+                user.id(),
+                user.name(),
+                user.lastName(),
+                user.email(),
+                user.age(),
+                user.address(),
+                user.username(),
+                user.phoneNumber(),
+                encodedPassword,
+                user.profilePhotoUrl(),
+                user.role());
+
+        User userNewPassword = userRepository.saveUser(updatedUser);
+
+        return new SuccessfulPasswordResetDto(
+                userNewPassword.email(),
+                "The password was successfully changed"
+        );
     }
 
 }
