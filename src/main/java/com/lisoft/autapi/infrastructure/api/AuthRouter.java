@@ -1,7 +1,6 @@
 package com.lisoft.autapi.infrastructure.api;
 
 import static com.lisoft.autapi.domain.utils.Constants.API_VERSION;
-import static com.lisoft.autapi.domain.utils.Constants.UNSUPPORTED_OPERATION_EXCEPTION_MESSAGE;
 
 import com.lisoft.autapi.application.dtos.*;
 import org.springframework.http.HttpStatus;

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.lisoft.autapi.application.dtos.ResponseWrapper;
+import com.lisoft.autapi.domain.exceptions.CannotLoadKeyException;
 import com.lisoft.autapi.domain.exceptions.ConflictWithExistingResourcesException;
 import com.lisoft.autapi.domain.exceptions.InvalidArgumentException;
 import com.lisoft.autapi.domain.exceptions.ResourceNotFoundException;
@@ -47,6 +48,18 @@ public class GlobalExceptionHandler {
                 null
             ),
             HttpStatus.CONFLICT
+        );
+    }
+
+    @ExceptionHandler(CannotLoadKeyException.class)
+    public ResponseEntity<ResponseWrapper<Object>> handleCannotLoadKey(CannotLoadKeyException exception) {
+        return new ResponseEntity<>(
+            new ResponseWrapper<>(
+                false,
+                exception.getMessage(),
+                null
+            ),
+            HttpStatus.INTERNAL_SERVER_ERROR
         );
     }
 

@@ -18,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import com.lisoft.autapi.application.utils.JWTUtils;
+import com.lisoft.autapi.domain.exceptions.CannotLoadKeyException;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -55,7 +56,7 @@ public class JWTUtilsComponent implements JWTUtils {
                 KeyFactory keyFactory = KeyFactory.getInstance("RSA");
                 privateKey = keyFactory.generatePrivate(spec);
             } catch (Exception e) {
-                throw new RuntimeException("Error loading private key", e);
+                throw new CannotLoadKeyException("Error loading private key", e);
             }
         }
 
@@ -74,7 +75,7 @@ public class JWTUtilsComponent implements JWTUtils {
                 KeyFactory keyFactory = KeyFactory.getInstance("RSA");
                 publicKey = keyFactory.generatePublic(spec);
             } catch (Exception e) {
-                throw new RuntimeException("Error loading public key", e);
+                throw new CannotLoadKeyException("Error loading public key", e);
             }
         }
 
