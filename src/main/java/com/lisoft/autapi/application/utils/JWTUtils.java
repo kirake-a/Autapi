@@ -32,5 +32,7 @@ public interface JWTUtils {
 
     String extractRole(String token);
 
+    String extractUserId(String token);
+
     PublicKey getPublicKey4Export();
 }

@@ -99,7 +99,14 @@ public class JWTUtilsComponent implements JWTUtils {
 
         if (user.getAuthorities() != null && !user.getAuthorities().isEmpty()) {
             String role = user.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+            String userId = "";
+
+            if (user instanceof com.lisoft.autapi.infrastructure.schemas.UserSchema userEntity) {
+                userId = userEntity.getId();
+            }
+            
             claims.put("role", role);
+            claims.put("userId", userId);
         }
 
         return generateToken(claims, user);
@@ -157,6 +164,11 @@ public class JWTUtilsComponent implements JWTUtils {
     @Override
     public String extractRole(String token) {
         return extractAllClaims(token).get("role", String.class);
+    }
+
+    @Override
+    public String extractUserId(String token) {
+        return extractAllClaims(token).get("userId", String.class);
     }
 
 }
