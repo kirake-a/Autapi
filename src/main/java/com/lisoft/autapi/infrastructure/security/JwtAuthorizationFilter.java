@@ -1,0 +1,100 @@
+package com.lisoft.autapi.infrastructure.security;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+
+import com.lisoft.autapi.application.utils.JWTUtils;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@Component
+public class JwtAuthorizationFilter extends OncePerRequestFilter {
+    private final JWTUtils jwtService;
+    private final UserDetailsService userDetailsService;
+
+    private static final Logger jwtAuthLogger = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
+    private final HandlerExceptionResolver handlerExceptionResolver;
+
+    public JwtAuthorizationFilter(
+        JWTUtils jwtService,
+        UserDetailsService userDetailsService,
+        HandlerExceptionResolver handlerExceptionResolver
+    ) {
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
+        this.handlerExceptionResolver = handlerExceptionResolver;
+    }
+
+    @Override
+    protected void doFilterInternal(
+        @NonNull HttpServletRequest request,
+        @NonNull HttpServletResponse response,
+        @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
+        final String authHeader = request.getHeader("Authorization");
+        final String token;
+        final String username;
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        try {
+            token = authHeader.substring(7);
+            username = jwtService.extractUsername(token);
+
+            if (
+                username != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null
+            ) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                String role = jwtService.extractRole(token);
+
+                List<GrantedAuthority> authorities = new ArrayList<>();
+
+                if (role != null && !role.isEmpty()) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                }
+
+                if (userDetails != null && jwtService.isTokenValid(token, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            username,
+                            null,
+                            authorities);
+
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                    jwtAuthLogger.info("JWT Username: {}", username);
+                    jwtAuthLogger.info("Authorities: {}", authorities);
+                }
+            }
+
+            filterChain.doFilter(request, response);
+        } catch (Exception exception) {
+            jwtAuthLogger.error("Error during JWT authorization in internal filter: {}", exception.getMessage());
+
+            handlerExceptionResolver.resolveException(request, response, null, exception);
+        }
+    }
+
+}
